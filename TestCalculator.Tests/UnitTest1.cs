@@ -32,7 +32,7 @@ namespace TestCalculator.Tests
         public void Test4()
         {
             int index = 0;
-            Assert.Throws<MyParseExpressionException>(() => MyExpression.Parse("((2++2*2)", ref index));
+            Assert.Throws<MyParseExpressionException>(() => MyExpression.Parse("((2+2*2)", ref index));
         }
 
         [Fact]
