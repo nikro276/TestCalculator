@@ -8,8 +8,7 @@ namespace TestCalculator
         {
             try
             {
-                //var input = Console.ReadLine();
-                var input = "2++2*2";
+                var input = Console.ReadLine();
                 Regex.Replace(input, @"\s+", "");
                 int index = 0;
                 var expression = MyExpression.Parse(input, ref index);
