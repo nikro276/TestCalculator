@@ -6,67 +6,97 @@ using System.Threading.Tasks;
 
 namespace TestCalculator
 {
-    public class MyOperation
+    public abstract class MyOperation
     {
-        public MyOperationType OperationType { get; set; }
-        public int Priority { get; set; }
+        public abstract int Priority { get; }
 
-        public decimal Execute(decimal leftOperand, decimal rightOperand)
+        public static Dictionary<char, Type> myOperationTypes;
+        public static Dictionary<char, Type> MyOperationTypes
         {
-            switch (OperationType)
+            get
             {
-                case MyOperationType.Addition:
-                    return leftOperand + rightOperand;
-                case MyOperationType.Substraction:
-                    return leftOperand - rightOperand;
-                case MyOperationType.Multiplication:
-                    return leftOperand * rightOperand;
-                case MyOperationType.Division:
-                    return leftOperand / rightOperand;
-                default:
-                    throw new MyParseExpressionException("Incorrect operation type");
+                if (myOperationTypes == null)
+                {
+                    myOperationTypes = new Dictionary<char, Type>();
+                    var myOperationType = typeof(MyOperation);
+                    var types = AppDomain.CurrentDomain.GetAssemblies()
+                        .SelectMany(x => x.GetTypes())
+                        .Where(type => myOperationType.IsAssignableFrom(type));
+                    object[]? attributes;
+                    MyOperationTypeAttribute attribute;
+                    foreach (var type in types)
+                    {
+                        attributes = type.GetCustomAttributes(typeof(MyOperationTypeAttribute), true);
+                        if (attributes.Length > 0)
+                        {
+                            attribute = (MyOperationTypeAttribute)attributes[0];
+                            myOperationTypes.Add(attribute.Symbol, type);
+                        }
+                    }
+                }
+                return myOperationTypes;
             }
         }
 
         public static MyOperation GetOperation(char operationChar)
         {
-            switch (operationChar)
-            {
-                case '+':
-                    return new MyOperation()
-                    {
-                        OperationType = MyOperationType.Addition,
-                        Priority = 2
-                    };
-                case '-':
-                    return new MyOperation()
-                    {
-                        OperationType = MyOperationType.Substraction,
-                        Priority = 2
-                    };
-                case '*':
-                    return new MyOperation()
-                    {
-                        OperationType = MyOperationType.Multiplication,
-                        Priority = 1
-                    };
-                case '/':
-                    return new MyOperation()
-                    {
-                        OperationType = MyOperationType.Division,
-                        Priority = 1
-                    };
-                default:
-                    return null;
-            }
+            if (!MyOperationTypes.ContainsKey(operationChar))
+                return null;
+            var type = MyOperationTypes[operationChar];
+            return (MyOperation)Activator.CreateInstance(type);
+        }
+
+        public abstract decimal Execute(decimal leftOperand, decimal rightOperand);
+    }
+
+    public class MyOperationTypeAttribute : Attribute
+    {
+        public char Symbol { get; }
+        public MyOperationTypeAttribute() { }
+        public MyOperationTypeAttribute(char symbol) => Symbol = symbol;
+    }
+
+    [MyOperationType('+')]
+    public class Addition : MyOperation
+    {
+        public override int Priority { get; } = 2;
+
+        public override decimal Execute(decimal leftOperand, decimal rightOperand)
+        {
+            return leftOperand + rightOperand;
         }
     }
 
-    public enum MyOperationType
+    [MyOperationType('-')]
+    public class Substraction : MyOperation
     {
-        Addition,
-        Substraction,
-        Multiplication,
-        Division
+        public override int Priority { get; } = 2;
+
+        public override decimal Execute(decimal leftOperand, decimal rightOperand)
+        {
+            return leftOperand - rightOperand;
+        }
+    }
+
+    [MyOperationType('*')]
+    public class Multiplication : MyOperation
+    {
+        public override int Priority { get; } = 1;
+
+        public override decimal Execute(decimal leftOperand, decimal rightOperand)
+        {
+            return leftOperand * rightOperand;
+        }
+    }
+
+    [MyOperationType('/')]
+    public class Division : MyOperation
+    {
+        public override int Priority { get; } = 1;
+
+        public override decimal Execute(decimal leftOperand, decimal rightOperand)
+        {
+            return leftOperand / rightOperand;
+        }
     }
 }

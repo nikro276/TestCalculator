@@ -9,10 +9,8 @@ namespace TestCalculator
             try
             {
                 var input = Console.ReadLine();
-                Regex.Replace(input, @"\s+", "");
-                int index = 0;
-                var expression = MyExpression.Parse(input, ref index);
-                var result = expression.Calculate();
+                var calculator = new MyCalculator();
+                var result = calculator.Calculate(input);
                 Console.WriteLine(result);
             }
             catch (MyParseExpressionException e)
